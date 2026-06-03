@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // HELPER PRIMITIVES
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidAudit(data) {
+      return data.keys().hasAll(['auditor', 'branch', 'area', 'advisor', 'date', 'items', 'completed']) &&
+             data.auditor is string && data.auditor.size() <= 100 &&
+             data.branch in ['Salta', 'Juyuy', 'Tartagal', 'Las Lajitas'] &&
+             data.area is string &&
+             data.advisor is string && data.advisor.size() <= 100 &&
+             data.date is string &&
+             data.items is list &&
+             data.completed is bool;
+    }
+
+    // COLLECTION: Audits
+    match /audits/{auditId} {
+      allow list: if true;
+      allow get: if true;
+      
+      allow create: if isSignedIn() && 
+                    isValidId(auditId) && 
+                    isValidAudit(incoming()) &&
+                    incoming().createdAt == request.time;
+      
+      allow update: if isSignedIn() &&
+                    isValidAudit(incoming()) &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    (
+                      // Action: Edit
+                      incoming().diff(existing()).affectedKeys().hasOnly(['items', 'generalObservations', 'completed', 'score', 'updatedAt'])
+                    );
+      
+      allow delete: if false; // Audits are permanent for traceability
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Audit LUX - Portal de Auditoría Posventa",
+  "description": "Plataforma digital para la gestión, ejecución y reporte de auditorías internas en las sucursales de Autolux (Toyota).",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}

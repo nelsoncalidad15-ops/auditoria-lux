@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "Audit": {
+      "title": "Audit Session",
+      "description": "A successful or in-progress audit session for a branch and area.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "auditor": { "type": "string" },
+        "branch": { "type": "string" },
+        "area": { "type": "string" },
+        "advisor": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "questionId": { "type": "string" },
+              "score": { "type": "string" },
+              "observation": { "type": "string" },
+              "photoUrl": { "type": "string" }
+            }
+          }
+        },
+        "generalObservations": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "score": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["auditor", "branch", "area", "advisor", "date", "items", "completed"]
+    }
+  },
+  "firestore": {
+    "/audits/{auditId}": {
+      "schema": "Audit",
+      "description": "Root collection for all audit sessions."
+    }
+  }
+}
