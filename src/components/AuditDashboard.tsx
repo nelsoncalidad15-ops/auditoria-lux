@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from "react";
-import { getAudits } from "../lib/firebase";
+import { getAudits } from "../lib/auditStorage";
 import { sheetsService } from "../services/sheetsService";
 import { Area, Branch, Question, AuditSession, AuditItem } from "../types";
 import { 

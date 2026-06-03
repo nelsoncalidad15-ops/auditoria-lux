@@ -11,13 +11,9 @@ import { Checklist } from "./components/Checklist";
 import { Summary } from "./components/Summary";
 import { Layout } from "./components/Layout";
 import { motion, AnimatePresence } from "motion/react";
-import { auth, testConnection } from "./lib/firebase";
-import { onAuthStateChanged, User } from "firebase/auth";
 import { AuditDashboard } from "./components/AuditDashboard";
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isReportView, setIsReportView] = useState(false);
   const [session, setSession] = useState<Partial<AuditSession>>({
     date: new Date().toISOString().split("T")[0],
@@ -30,15 +26,6 @@ export default function App() {
     if (params.get("view") === "report") {
       setIsReportView(true);
     }
-  }, []);
-
-  useEffect(() => {
-    testConnection();
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
-    return () => unsubscribe();
   }, []);
 
   const [step, setStep] = useState<"auditor" | "config" | "checklist" | "summary">("auditor");

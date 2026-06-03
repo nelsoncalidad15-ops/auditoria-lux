@@ -3,14 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import axios from "axios";
 import { Area, Branch, Question, ScoreValue, ControlPartItem } from "../types";
 import { GID_MAPPING, SHEET_ID_SALTA, SHEET_ID_JUJUY } from "../constants";
+import { fetchGoogleSheetTable } from "../lib/googleSheets";
 
 export const sheetsService = {
   async fetchSheetData(sheetId: string, gid: string) {
-    const response = await axios.get(`/api/sheets/${sheetId}/${gid}`);
-    return response.data.table;
+    return fetchGoogleSheetTable(sheetId, gid);
   },
 
   async getRepuestosControlData(branch?: Branch): Promise<ControlPartItem[]> {

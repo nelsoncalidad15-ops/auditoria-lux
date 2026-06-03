@@ -77,7 +77,7 @@ const getRoleScores = (qs: Question[], items: AuditItem[], area: string): RoleSc
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { motion } from "motion/react";
-import { saveAudit } from "../lib/firebase";
+import { saveAudit } from "../lib/auditStorage";
 
 interface SummaryProps {
   session: AuditSession;
