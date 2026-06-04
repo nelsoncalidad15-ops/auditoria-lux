@@ -163,7 +163,11 @@ export const sheetsService = {
   },
 
   async getQuestions(area: Area, branch: Branch): Promise<Question[]> {
-    const sheetId = area === Area.REPUESTOS ? SHEET_ID_SALTA : (branch === Branch.JUJUY ? SHEET_ID_JUJUY : SHEET_ID_SALTA);
+    // Servicios uses a standardized checklist layout. The Jujuy workbook has a
+    // different structure there, so we keep Salta as the canonical source for
+    // the audit questions across all branches.
+    const shouldUseJujuySheet = branch === Branch.JUJUY && area !== Area.SERVICIOS;
+    const sheetId = area === Area.REPUESTOS ? SHEET_ID_SALTA : (shouldUseJujuySheet ? SHEET_ID_JUJUY : SHEET_ID_SALTA);
     const gids = Array.isArray(GID_MAPPING[area]) ? (GID_MAPPING[area] as string[]) : [GID_MAPPING[area] as string];
     
     let allQuestions: Question[] = [];
