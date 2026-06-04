@@ -123,6 +123,17 @@ export async function saveAudit(session: AuditSession, score: number) {
     throw new Error(`Apps Script devolvio estado ${response.status}`);
   }
 
+  let result: { ok?: boolean; error?: string } | null = null;
+  try {
+    result = await response.json();
+  } catch {
+    // Some Apps Script deployments can return non-JSON payloads on transient failures.
+  }
+
+  if (result && result.ok === false) {
+    throw new Error(result.error || "Apps Script rechazo el guardado");
+  }
+
   return audit.id;
 }
 

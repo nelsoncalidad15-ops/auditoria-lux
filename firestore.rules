@@ -26,7 +26,7 @@ service cloud.firestore {
     function isValidAudit(data) {
       return data.keys().hasAll(['auditor', 'branch', 'area', 'advisor', 'date', 'items', 'completed']) &&
              data.auditor is string && data.auditor.size() <= 100 &&
-             data.branch in ['Salta', 'Juyuy', 'Tartagal', 'Las Lajitas'] &&
+             data.branch in ['Salta', 'Jujuy', 'Tartagal', 'Las Lajitas'] &&
              data.area is string &&
              data.advisor is string && data.advisor.size() <= 100 &&
              data.date is string &&
