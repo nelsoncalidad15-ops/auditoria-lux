@@ -11,10 +11,11 @@ import { sheetsService } from "../services/sheetsService";
 interface AuditConfigProps {
   initialConfig: Partial<AuditSession>;
   onComplete: (config: Partial<AuditSession>) => void;
+  onChange?: (config: Partial<AuditSession>) => void;
   onBack: () => void;
 }
 
-export function AuditConfig({ initialConfig, onComplete, onBack }: AuditConfigProps) {
+export function AuditConfig({ initialConfig, onComplete, onChange, onBack }: AuditConfigProps) {
   const [config, setConfig] = useState<Partial<AuditSession>>({
     branch: Branch.SALTA,
     area: Area.CITAS_CALL,
@@ -63,6 +64,10 @@ export function AuditConfig({ initialConfig, onComplete, onBack }: AuditConfigPr
       }
     }
   }, [config.branch, config.area]);
+
+  useEffect(() => {
+    onChange?.(config);
+  }, [config, onChange]);
 
   const isValid = 
     config.branch && 
