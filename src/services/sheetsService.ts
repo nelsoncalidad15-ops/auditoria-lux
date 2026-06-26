@@ -406,9 +406,10 @@ export const sheetsService = {
             }
           }
         } else if (area === Area.ORDENES) {
-          // Spreadsheet rows 4 to 83 on GID 541041887 correspond to Gviz/CSV indices 3 to 82.
-          // Odd rows are question rows, even rows are criteria rows.
-          for (let i = 3; i <= 81; i += 2) {
+          // Spreadsheet rows 2 to 82 on GID 541041887 correspond to Gviz/CSV indices 1 to 81.
+          // Odd indexes are question rows, even indexes are criteria rows.
+          // This starts at question 1: "Numero de OR".
+          for (let i = 1; i <= 81; i += 2) {
             const qRow = table.rows[i];
             const cRow = table.rows[i + 1];
             if (!qRow || !qRow.c) continue;
