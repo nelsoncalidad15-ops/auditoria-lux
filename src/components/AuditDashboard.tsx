@@ -213,14 +213,9 @@ export function AuditDashboard({
       return "gestion_pvt";
     }
     if (area === Area.ORDENES) {
-      if (q && q.responsible) {
-        const resp = q.responsible.toUpperCase();
-        if (resp.includes("CITA")) return "citas";
-        if (resp.includes("SERVICIO")) return "servicios";
-        if (resp.includes("TECNICO") || resp.includes("TÉCNICO")) return "tecnicos";
-        if (resp.includes("JEFE") || resp.includes("LIDER") || resp.includes("LÍDER") || resp.includes("REPUESTO")) return "repuestos";
-      }
-      return "servicios"; // default fallback for ORDENES
+      // Ordenes / Recepcion se informa como area propia. No debe sumar
+      // a las disciplinas de Servicios ni Tecnicos para evitar doble conteo.
+      return null;
     }
     return null;
   };
