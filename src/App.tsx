@@ -12,6 +12,7 @@ import { Summary } from "./components/Summary";
 import { Layout } from "./components/Layout";
 import { motion, AnimatePresence } from "motion/react";
 import { AuditDashboard } from "./components/AuditDashboard";
+import { clearAuditDraft, loadAuditDraft, StoredAuditDraft } from "./lib/auditDraftStorage";
 
 type AppStep = "auditor" | "config" | "checklist" | "summary";
 
@@ -75,6 +76,7 @@ export default function App() {
   });
   const [step, setStep] = useState<AppStep>(initialUrlState.step);
   const [completedSessions, setCompletedSessions] = useState<AuditSession[]>([]);
+  const [savedDraft, setSavedDraft] = useState<StoredAuditDraft | null>(() => loadAuditDraft());
 
   useEffect(() => {
     const handlePopState = () => {
@@ -132,6 +134,8 @@ export default function App() {
 
   const handleChecklistComplete = (items: AuditItem[], generalObservations: string, controlParts?: ControlPartItem[]) => {
     const finalSession = { ...session, items, generalObservations, controlParts, completed: true } as AuditSession;
+    clearAuditDraft();
+    setSavedDraft(null);
     setSession(finalSession);
     setCompletedSessions((prev) => {
       const filtered = prev.filter(
@@ -145,6 +149,8 @@ export default function App() {
 
   const handleReset = (keepConfig: boolean) => {
     if (keepConfig) {
+      clearAuditDraft();
+      setSavedDraft(null);
       const nextSession = {
         ...session,
         items: [],
@@ -158,10 +164,45 @@ export default function App() {
     }
 
     const nextSession = getDefaultSession();
+    clearAuditDraft();
+    setSavedDraft(null);
     setSession(nextSession);
     setCompletedSessions([]);
     syncUrl("auditor", nextSession, false);
     setStep("auditor");
+  };
+
+
+  const handleSaveDraftAndExit = (_draftSession: AuditSession) => {
+    const nextSession = getDefaultSession();
+    setSavedDraft(loadAuditDraft());
+    setSession(nextSession);
+    setCompletedSessions([]);
+    syncUrl("auditor", nextSession, false);
+    setStep("auditor");
+    setIsReportView(false);
+  };
+
+  const handleResumeDraft = () => {
+    if (!savedDraft) {
+      return;
+    }
+
+    const draftSession = {
+      ...savedDraft.session,
+      completed: false,
+    };
+
+    setCompletedSessions([]);
+    setSession(draftSession);
+    syncUrl("checklist", draftSession, false);
+    setStep("checklist");
+    setIsReportView(false);
+  };
+
+  const handleDiscardDraft = () => {
+    clearAuditDraft();
+    setSavedDraft(null);
   };
 
   const goToStep = (targetStep: AppStep) => {
@@ -246,6 +287,36 @@ export default function App() {
           )}
         </div>
 
+        {savedDraft && step !== "summary" && (
+          <div className="mb-6 bg-[#FFF8E8] border border-[#F3D48B] rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 shadow-sm">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#9A6700]">Borrador Detectado</p>
+              <h3 className="text-lg font-black text-toyota-black mt-1">
+                Servicios | {savedDraft.session.branch} | {savedDraft.session.advisor}
+              </h3>
+              <p className="text-xs text-[#7A5A00] font-bold mt-1">
+                Guardado localmente el {new Date(savedDraft.savedAt).toLocaleString("es-AR")}. Puedes retomarlo o descartarlo.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={handleResumeDraft}
+                className="px-4 py-3 rounded-xl bg-toyota-black text-white text-[10px] font-black uppercase tracking-[0.18em] hover:bg-black transition-colors"
+              >
+                Continuar Auditoria
+              </button>
+              <button
+                type="button"
+                onClick={handleDiscardDraft}
+                className="px-4 py-3 rounded-xl bg-white text-gray-600 border border-gray-300 text-[10px] font-black uppercase tracking-[0.18em] hover:bg-gray-50 transition-colors"
+              >
+                Borrar Borrador
+              </button>
+            </div>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           {step === "auditor" && (
             <motion.div
@@ -284,6 +355,7 @@ export default function App() {
               <Checklist
                 session={session as AuditSession}
                 onComplete={handleChecklistComplete}
+                onSaveAndExit={handleSaveDraftAndExit}
                 onBack={() => goToStep("config")}
               />
             </motion.div>

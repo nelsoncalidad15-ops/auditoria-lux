@@ -8,19 +8,21 @@ import { AuditSession, AuditItem, Question, ScoreValue, Area, ControlPartItem } 
 import { sheetsService } from "../services/sheetsService";
 import { ArrowLeft, Camera, AlertCircle, CheckCircle, MinusCircle, Info, Save } from "lucide-react";
 import { motion } from "motion/react";
+import { saveAuditDraft } from "../lib/auditDraftStorage";
 
 interface ChecklistProps {
   session: AuditSession;
   onComplete: (items: AuditItem[], notes: string, controlParts?: ControlPartItem[]) => void;
+  onSaveAndExit: (session: AuditSession) => void;
   onBack: () => void;
 }
 
-export function Checklist({ session, onComplete, onBack }: ChecklistProps) {
+export function Checklist({ session, onComplete, onSaveAndExit, onBack }: ChecklistProps) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [items, setItems] = useState<Record<string, AuditItem>>({});
-  const [generalNotes, setGeneralNotes] = useState("");
+  const [generalNotes, setGeneralNotes] = useState(session.generalObservations || "");
   const [loading, setLoading] = useState(true);
-  const [controlParts, setControlParts] = useState<ControlPartItem[]>([]);
+  const [controlParts, setControlParts] = useState<ControlPartItem[]>(session.controlParts || []);
 
   useEffect(() => {
     sheetsService.getQuestions(session.area, session.branch).then((qs) => {
@@ -39,6 +41,11 @@ export function Checklist({ session, onComplete, onBack }: ChecklistProps) {
         }
       });
 
+      const savedItems = (session.items || []).reduce<Record<string, AuditItem>>((acc, item) => {
+        acc[item.questionId] = item;
+        return acc;
+      }, {});
+
       if (session.area === Area.ORDENES && qs.length > 0) {
         initialItems[qs[0].id] = {
           questionId: qs[0].id,
@@ -47,7 +54,7 @@ export function Checklist({ session, onComplete, onBack }: ChecklistProps) {
         };
       }
       
-      setItems(initialItems);
+      setItems({ ...initialItems, ...savedItems });
 
       if (session.area === Area.REPUESTOS) {
         sheetsService.getRepuestosControlData(session.branch).then((parts) => {
@@ -112,6 +119,21 @@ export function Checklist({ session, onComplete, onBack }: ChecklistProps) {
       setLoading(false);
     });
   }, [session.area, session.branch]);
+
+
+  useEffect(() => {
+    if (loading || session.area !== Area.SERVICIOS || questions.length === 0) {
+      return;
+    }
+
+    saveAuditDraft({
+      ...session,
+      items: Object.values(items) as AuditItem[],
+      generalObservations: generalNotes,
+      controlParts,
+      completed: false,
+    });
+  }, [controlParts, generalNotes, items, loading, questions.length, session]);
 
   const handleScore = (qId: string, score: ScoreValue) => {
     setItems((prev) => ({
@@ -463,6 +485,25 @@ export function Checklist({ session, onComplete, onBack }: ChecklistProps) {
           )}
 
           <div className="space-y-4">
+            {session.area === Area.SERVICIOS && (
+              <button
+                type="button"
+                onClick={() => {
+                  const draftSession = {
+                    ...session,
+                    items: Object.values(items) as AuditItem[],
+                    generalObservations: generalNotes,
+                    controlParts,
+                    completed: false,
+                  };
+                  saveAuditDraft(draftSession);
+                  onSaveAndExit(draftSession);
+                }}
+                className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.18em] bg-[#FFF8E8] text-[#9A6700] border border-[#F3D48B] hover:bg-[#FFF2CC] transition-all"
+              >
+                Guardar y Salir
+              </button>
+            )}
             <button
               onClick={() => onComplete(Object.values(items) as AuditItem[], generalNotes, controlParts)}
               disabled={!isComplete}
